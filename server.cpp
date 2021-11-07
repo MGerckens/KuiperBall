@@ -33,7 +33,8 @@ int main() {
     //waiting for connection
     acceptor_.accept(socket_);
     stringstream* s;
-    int x, y, p;
+    int x, y;
+    bool first = true;
     send_(socket_, minesweeper->getResult());
     while (true) {
         string message = read_(socket_);
@@ -43,12 +44,20 @@ int main() {
 
         system("cls");
         cout << minesweeper->getResult() ;
-        input:
+    input:
+        if (first) { cout << "Enter coordinates as \"x y\": "; }
         cin >> y >> x;
         minesweeper->process(x, y);
         string res = minesweeper->getResult();
-        if (!res.compare("L")) {
-            goto fail;
+        if (!res.compare("G")) {
+            cout << "Game Over!" << endl; 
+            system("pause");
+            return 0;
+        }
+        else if (!res.compare("Y")) {
+            cout << "You Win!" << endl;
+            system("pause");
+            return 0;
         }
         else if (!res.compare("I")) {
             cout << "Already picked, try again\n";
@@ -57,9 +66,7 @@ int main() {
         else {
             send_(socket_, res);
         }
+        first = false;
     }
-    fail:
-    cout << "Game Over!" << endl;
-    system("pause");
-    return 0;
+  
 }

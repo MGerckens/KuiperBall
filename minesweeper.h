@@ -4,6 +4,7 @@
 #include <string>
 #include <ctime>
 #define BOARD_SIZE 9
+#define MINE_COUNT 10
 
 
 using std::cin;
@@ -32,16 +33,42 @@ private:
 		}
 		return count;
 	}
-
-public:
-	Minesweeper() {
-		srand(time(NULL));
+	void floodfill(int x, int y) {
+		if (x < 0 || y < 0 || x >= BOARD_SIZE || y >= BOARD_SIZE || revealed[x][y] == true) { return; }
+		revealed[x][y] = true;
+		if (grid[x][y] != '0' ) { return; }
+		floodfill(x - 1, y);
+		floodfill(x + 1, y);
+		floodfill(x, y - 1);
+		floodfill(x, y + 1);
+		return;
+	}
+	bool check_win() {
+		int count = 0;
 		for (int i = 0; i < BOARD_SIZE; i++) {
 			for (int j = 0; j < BOARD_SIZE; j++) {
-				int mine = rand() % 99;
-				if (mine < 15) { grid[i][j] = 'X'; }
+				if (grid[i][j] != 'X' && revealed[i][j] == true) {
+					count++;
+				}
 			}
 		}
+		return count == (BOARD_SIZE * BOARD_SIZE) - MINE_COUNT;
+	}
+public:
+	Minesweeper() {
+		int x, y;
+		srand(time(NULL));
+		for (int i = 0; i < MINE_COUNT; i++) {
+			while (true) {
+				x = rand() % 8;
+				y = rand() % 8;
+				if (grid[x][y] != 'X') {
+					break;
+				}
+			}
+			grid[x][y] = 'X';
+		}
+
 		//cout << "done placing mines \n\n\n";
 		for (int i = 0; i < BOARD_SIZE; i++) {
 			for (int j = 0; j < BOARD_SIZE; j++) {
@@ -52,8 +79,9 @@ public:
 	}
 	string getResult() {
 		stringstream outbuffer;
-		if (lost) { return "L"; }
-		if (!valid) { return "I"; }
+		if (check_win()) {return "You Win!\n";}
+		if (lost) { return "Game Over!\n"; }
+		if (!valid) { return "Invalid Move, Please try again\n"; }
 		for (int i = 0; i < BOARD_SIZE; i++) {
 			for (int j = 0; j < BOARD_SIZE; j++) {
 				if (!revealed[i][j]) { outbuffer << "-"; }
@@ -70,16 +98,8 @@ public:
 			return;
 		}
 		if(grid[x][y] != 'X') {
-			//tempy = BOARD_SIZE - stoi(position.substr(2, 1)) - 1;
-			//tempx = stoi(position.substr(0, 1)) - 1;
-			//cout << grid[x][y] << endl;
-			revealed[x][y] = true;
+			floodfill(x, y);
 			valid = true;
-			
-
-			//for (int i = 0; i < BOARD_SIZE; i++) { for (int j = 0; j < BOARD_SIZE; j++) { print_point(i, j); } cout << endl; }
-			
-			//valid = false;
 		}
 		else {
 			lost = true;

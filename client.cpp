@@ -1,5 +1,6 @@
 #include <iostream>
 #include <boost/asio.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 using namespace boost::asio;
 using ip::tcp;
@@ -18,21 +19,18 @@ void send_(tcp::socket& socket, const string& message) {
     boost::asio::write(socket, boost::asio::buffer(message));
 }
 
-std::string buffer_to_string(const boost::asio::streambuf& buffer)
-{
-    using boost::asio::buffers_begin;
 
-    auto bufs = buffer.data();
-    std::string result(buffers_begin(bufs), buffers_begin(bufs) + buffer.size());
-    return result;
-}
 bool first = true;
 int main() {
+    string ip;
+    cout << "Enter server IP: ";
+    std::getline(std::cin, ip);
+    //boost::algorithm::trim(ip);
     boost::asio::io_service io_service;
     //socket creation
     tcp::socket socket(io_service);
     //connection
-    socket.connect(tcp::endpoint(boost::asio::ip::address::from_string("127.0.0.1"), 1234));
+    socket.connect(tcp::endpoint(boost::asio::ip::address::from_string(ip.c_str()), 1234));
     string message, senddata;
     boost::system::error_code error;
     //boost::asio::streambuf receive_buffer;
@@ -42,16 +40,20 @@ int main() {
             cout << "receive failed: " << error.message() << endl;
         }
         else {
-            if (!message.compare("I") && !first) {
+            if (message.at(0) == 'I' && !first) {
                 continue;
-            }
-            if (!message.compare("L")) {
-                cout << "Game Over!" << endl;
-                goto fail;
             }
             else {
                 system("cls");
                 cout << message;
+                if (first) { 
+                    system("cls");
+                    cout << "Enter coordinates as \"x y\": ";
+                }
+                if (message.at(0) == 'Y' || message.at(0) == 'G') {
+                    system("pause");
+                    return 0;
+                }
             }
         }
         
@@ -63,8 +65,4 @@ int main() {
         }
         first = false;
     }
-fail:
-    cout << "Game Over!" << endl;
-    system("pause");
-    return 0;
 }
